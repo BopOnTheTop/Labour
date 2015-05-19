@@ -1,0 +1,95 @@
+#include <omp.h>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#define N 5000
+#define THREADS 10
+#define NRA 62                 /* number of rows in matrix A */
+#define NCA 15                 /* number of columns in matrix A */
+#define NCB 7                  /* number of columns in matrix B */
+
+using namespace std;
+int seek_the_number(int mass[],int number)
+{
+int entries = 0;
+for(int i=0;i<N;i++)
+    {
+        if(mass[number]==mass[i])entries++;//Прохід по всьому масиву. Вираховуємо кількість входжень.
+    }
+return entries;
+}
+
+int confirm_number(int base[][2],int entries, int number)//підтвердження наявності конкретної циферки в "базі"
+{
+for(int i = 0 ; i<entries ;i++)
+    {
+        if(number==base[i][0])return 1;
+    }
+return 0;
+}
+int main (int argc, char *argv[])
+{
+int	PID, nthreads, chunk;
+int zero,worked_out[THREADS];
+int P;
+int rez = 0, globalres = 0;
+int mass[N]={0}, base[N][2]={0}, entries[THREADS]={0};// Масив згенерених чисел, ну і база унікальних чисел.
+int Rez[THREADS][2]={0},maxi[THREADS]={0},winner[THREADS]={0};
+for(int i = 0; i < N; i++) mass[i]=rand()%100;//Ініціалізували випадковий масив
+zero = clock();
+chunk = 10;                    /* set loop iteration chunk size */
+
+/*** Spawn a parallel region explicitly scoping all variables ***/
+#pragma omp parallel shared(mass,base,entries,winner,worked_out,maxi,nthreads,chunk) private(PID)
+  PID = omp_get_thread_num();
+  if (PID == 0)
+    {
+    nthreads = omp_get_num_threads();
+    }
+  /*** Initialize matrices ***/
+
+
+int lo = N/THREADS*PID, hi = N/THREADS*PID + N/THREADS;  //діапазон значень - N/THREADS*PID + N/THREADS
+for(int i = lo; i < hi; i++)
+        if(!confirm_number(base,entries[PID],mass[i]))
+            {
+                base[entries[PID]][0]=mass[i];
+                base[entries[PID]][1]=seek_the_number(mass,mass[i]);
+                entries[PID]++;
+            }
+for(int i = lo; i < hi; i++)
+        {
+            if(maxi[PID]<base[i][1])maxi[PID] = base[i][1],winner[PID]=base[i][0];
+        }
+
+  /*** Do matrix multiply sharing iterations on outer loop ***/
+  /*** Display who does which iterations for demonstration purposes ***/
+  /*printf("Thread %d starting matrix multiply...\n",tid);
+  #pragma omp for schedule (static, chunk)
+  for (i=0; i<NRA; i++)
+    {
+    printf("Thread=%d did row=%d\n",tid,i);
+    for(j=0; j<NCB; j++)
+      for (k=0; k<NCA; k++)
+        c[i][j] += a[i][k] * b[k][j];
+    }
+  }  */
+/*** End of parallel region ***/
+
+
+/*** Print results ***/
+//printf("******************************************************\n");
+for(int i = 0; i< THREADS; i++)
+    if(globalres<entries[i])globalres=entries[i],rez=winner[i];
+if( PID == 0 )
+{
+    cout << "Result: " << rez << "\n";
+    for(int i = 0; i< THREADS;i++)
+        cout << "Процес №"<< i << " працював " << ((worked_out[i]-zero)*1.0)/CLOCKS_PER_SEC << " с\n";
+}
+//printf("******************************************************\n");
+//printf ("Done.\n");
+
+}
+
+
