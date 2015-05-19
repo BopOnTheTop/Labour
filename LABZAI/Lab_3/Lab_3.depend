@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1429658640 source:/home/masterbob/WORK/LABZAI/Lab_3/main.cpp
+	<iostream>
+	<cstdlib>
+	<thread>
+	<cmath>
+	<ctime>
+
