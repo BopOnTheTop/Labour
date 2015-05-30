@@ -1,9 +1,0 @@
-# depslib dependency file v1.0
-1429655608 source:/home/masterbob/WORK/LABZAI/lab_2/main.cpp
-	<iostream>
-	<fstream>
-	<vector>
-	<mpi.h>
-	<cmath>
-	<ctime>
-
